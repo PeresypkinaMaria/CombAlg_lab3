@@ -11,6 +11,12 @@ namespace CombAlg_lab3
         private List<Item> bestItems = null;
         private double maxW; //максимальный вес
         private double bestPrice;
+        private long curTime = 0; //время работы
+
+        public long GetTime()
+        {
+            return curTime;
+        }
 
         public Backpack(double _maxW)
         {
@@ -42,6 +48,9 @@ namespace CombAlg_lab3
         //проверка на лучшее решение
         private void CheckSet(List<Item> items)
         {
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
             if (bestItems == null)
             {
                 if (CalcWeigth(items) <= maxW)
@@ -58,6 +67,9 @@ namespace CombAlg_lab3
                     bestPrice = CalcPrice(items);
                 }
             }
+
+            sw.Stop();
+            curTime = sw.ElapsedTicks;
         }
 
         //создание всех наборов перестановок значений (рекурсивный метод)
