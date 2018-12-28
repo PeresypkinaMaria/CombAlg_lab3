@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,12 +12,9 @@ namespace CombAlg_lab3
         private List<Item> bestItems = null;
         private double maxW; //максимальный вес
         private double bestPrice;
-        private long curTime = 0; //время работы
 
-        public long GetTime()
-        {
-            return curTime;
-        }
+        private Stopwatch stopWatch;
+        public long CurrTime{ get; set; }
 
         public Backpack(double _maxW)
         {
@@ -48,8 +46,8 @@ namespace CombAlg_lab3
         //проверка на лучшее решение
         private void CheckSet(List<Item> items)
         {
-            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-            sw.Start();
+            stopWatch = new Stopwatch();
+            stopWatch.Start();
 
             if (bestItems == null)
             {
@@ -68,8 +66,8 @@ namespace CombAlg_lab3
                 }
             }
 
-            sw.Stop();
-            curTime = sw.ElapsedTicks;
+            stopWatch.Stop();
+            CurrTime = stopWatch.ElapsedTicks;
         }
 
         //создание всех наборов перестановок значений (рекурсивный метод)

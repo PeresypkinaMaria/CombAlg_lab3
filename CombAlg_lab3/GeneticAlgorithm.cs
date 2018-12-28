@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,87 +9,142 @@ namespace CombAlg_lab3
 {
     class GeneticAlgorithm
     {
-        private int numOfChromosomes;
-        private int mutationPercent;
-        private int mutationCount;
-        private int cntParentChromes;
+        private Random rand;
+        private Stopwatch stopWatch;
+        public long TimeGen { get; set; }
 
-        private long curTimeGen = 0;
+        private int numOfChromosomes; //кол-во хромосом
+        private int mutationPercent; //процент мутаций
+        private int mutationCount; //кол-во мутаций
+        private int cntParentChromes; //кол-во отбираемых хромосом
 
-        public long GetTimeGen()
-        {
-            return curTimeGen;
-        }
+        private List<Chromosome> firstGeneration;
+        private List<Chromosome> currentGeneration;
+        public List<Item> bestItems = null;
+        private bool detected = false;
 
-        //возможный набор предметов
-        class Item_Set
-        {
-            public int[] it_set;
+        public double needWeigth;
+        private double currSumPrice = 0;
 
-            public Item_Set(int len)
-            {
-                it_set = new int[len];
-                Random rand = new Random();
-                for (int j = 0; j < it_set.Length; j++)
-                {
-                    it_set[j] = rand.Next(0, 1);
-                }
-            }
-        }
-
-        private double maxW; //максимальный вес
-        private int num_progeny; //кол-во потомков
-        //List<Genotype> progeny; //потомство
-        private int cnt_items;
         private List<Item> items;
 
-        public GeneticAlgorithm(double _maxw, int _len, int num_chr, List<Item> it)
+
+        public GeneticAlgorithm(double need_w, List<Item> it, int mut_per, int num_chr, int mut_cnt, int cnt_par_chr)
         {
-            maxW = _maxw;
-            cnt_items = _len;          
-            num_progeny = num_chr;
+            rand = new Random();
+            needWeigth = need_w;
             items = it;
-            chromosome = new Dictionary<Item, bool>(items.Count);
-            for (int i = 0; i < chromosome.Count; i++)
+            mutationPercent = mut_per;
+            numOfChromosomes = num_chr;
+            mutationCount = mut_cnt;
+            cntParentChromes = cnt_par_chr;
+        }
+
+        public void RunGenAlgorithm(int steps)
+        {
+            stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            SetFirstGeneration(); //получаем первое поколение
+            CheckAll(firstGeneration);
+            currentGeneration = firstGeneration;
+            for (int step = 2; step <= steps; step++)
             {
-                chromosome.Add(items[i], )
+                GetNextGeneration();
+                CheckAll(currentGeneration);
             }
-        }
-
-        private void GetDict()
-        {
-
-        }
-
-        //генерация потомства
-        public void GenerationProgeny()
-        {
-            for (int i = 0; i < num_progeny; i++)
+            if (bestItems == null)
             {
-                genotype.Add(items, new Item_Set(cnt_items));
+                bestItems = currentGeneration[0].GetItems();
+                currSumPrice = currentGeneration[0].SumPrice;
             }
+            stopWatch.Stop();
+            TimeGen = stopWatch.ElapsedTicks;
         }
 
-        public KeyValuePair<double, double> FitnessFunc()
+        //поиск наилучшего решения
+        private void CheckAll(List<Chromosome> popul)
         {
-            KeyValuePair<double, double> pw;
-            double sumP = 0;
-            double sumW = 0;
-            foreach (Item_Set itset in genotype.Values)
+            for (int i = 0; i < firstGeneration.Count; i++)
             {
-                for (int i = 0; i < cnt_items; i++)
+                if (popul[i].CheckWeigth(needWeigth) && popul[i].SumPrice > currSumPrice)
                 {
-                    if (itset.it_set[i] == 1)
-                    {
-                        foreach (List<Item> it in genotype.Keys)
-                        {
-                            pw.Key += it[i].price;
-                            sumW += it[i].weigth;
-                        }
-                    }
+                    bestItems = popul[i].GetItems();
+                    currSumPrice = popul[i].SumPrice;
                 }
-            }            
-            return KeyValuePair
+            }
+        }
+
+        //генерация следующего поколения
+        private void GetNextGeneration()
+        {
+            //SortPopulation(currentGeneration);
+            List<Chromosome> nextGen = currentGeneration;
+            //скрещивание
+            for (int i = 0; i < currentGeneration.Count - 1; i++)
+            {
+                Chromosome chr = Selection(currentGeneration[i], currentGeneration[i + 1]);
+                if (!chr.IsEmpty())
+                    nextGen.Add(chr);
+            }
+            Mutation(nextGen); //мутация
+            SortPopulation(nextGen); //сортировка
+            currentGeneration.Clear();
+            for (int i = 0; i < cntParentChromes; i++)
+            {
+                currentGeneration.Add(nextGen[i]);
+            }
+            SortPopulation(currentGeneration);
+        }
+
+        //первая генерация потомства
+        private void SetFirstGeneration()
+        {
+            firstGeneration = new List<Chromosome>();
+            while (firstGeneration.Count < numOfChromosomes)
+            {
+                Chromosome chr = new Chromosome(items);
+                if (!chr.IsEmpty())
+                    firstGeneration.Add(chr);
+            }
+        }
+
+        //сортировка популяции (по фитнес-функции)
+        public void SortPopulation(List<Chromosome> popul)
+        {
+            int k; //индекс эл-та с наибольшим выживанием
+            Chromosome chr;
+            for (int i = 0; i < popul.Count; i++)
+            {
+                k = i;
+                chr = popul[i];
+                for (int j = i + 1; j < popul.Count; j++)
+                    if (popul[j].SumPrice > chr.SumPrice && Math.Abs(popul[j].SumWeigth - needWeigth) < Math.Abs(chr.SumWeigth - needWeigth))
+                    {
+                        k = j;
+                        chr = popul[j];
+                    }
+                popul[k] = popul[i];
+                popul[i] = chr; //меняем местами с popul[i]
+            }
+        }
+
+        //мутация
+        private void Mutation(List<Chromosome> popul)
+        {
+            for (int i = 0; i < mutationCount; i++)
+            {
+                int num = rand.Next(0, popul.Count - 1);
+                popul[num].Mutate(mutationPercent);
+                popul[num].SetPriceAndWeigth();
+            }
+        }
+
+        //генерация новой хромосомы из двух (скрещивание)
+        private Chromosome Selection(Chromosome father, Chromosome mother)
+        {
+            Chromosome child = new Chromosome(father, mother);
+            return child;
         }
     }
 }
