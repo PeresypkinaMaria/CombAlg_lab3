@@ -12,12 +12,17 @@ namespace CombAlg_lab3
         private Random rand;
         public int[] available;
         //public int Size { get; private set; }
-        public Availability(int len)
+        public Availability(int len, Random r)
         {
-            rand = new Random();
+            rand = r;
             available = new int[len];
             for (int i = 0; i < len; i++)
-                available[i] = rand.Next(0, 1);
+            {
+                if (rand.Next(1, 100) > 50)
+                    available[i] = 1;
+                else
+                    available[i] = 0;
+            }
         }
     }
 
@@ -25,7 +30,6 @@ namespace CombAlg_lab3
     class Chromosome
     {
         private Random rand;
-        private Dictionary<Item, int> chromosome;
         private List<Item> items;
         private Availability avail;
         private int Size { get; set; }
@@ -33,29 +37,24 @@ namespace CombAlg_lab3
         public double SumPrice{ get; private set; }
         public double SumWeigth { get; private set; }
 
-        public Chromosome(List<Item> it)
+        public Chromosome(List<Item> it, Random r)
         {
-            rand = new Random();
+            rand = r;
             Size = it.Count;
             items = it;
-            avail = new Availability(Size);
-            chromosome = new Dictionary<Item, int>(Size);
-            for (int i = 0; i < Size; i++)
-            {
-                chromosome.Add(items[i], avail.available[i]);
-            }
+            avail = new Availability(Size, rand);
             SetPriceAndWeigth();
         }
 
         //получение цены и веса предметов в выборке (фитнес функция)
         public void SetPriceAndWeigth()
         {
-            foreach (KeyValuePair<Item, int> kv in chromosome)
-            {
-                if (kv.Value == 1)
+            for (int i = 0; i < Size; i++)
+            { 
+                if (avail.available[i] == 1)
                 {
-                    SumPrice += kv.Key.price;
-                    SumWeigth += kv.Key.weigth;
+                    SumPrice += items[i].price;
+                    SumWeigth += items[i].weigth;
                 }
             }
         }
@@ -64,17 +63,23 @@ namespace CombAlg_lab3
         public Chromosome(Chromosome f, Chromosome m)
         {
             rand = new Random();
+            items = f.items;
+            avail = new Availability(f.Size, rand);
             Size = f.Size;
             int b = rand.Next(1, Size - 1); //выбор рандомной точки, по к-ой будем делить
-            chromosome = new Dictionary<Item, int>(Size);
             int[] father = f.avail.available;
             int[] mother = m.avail.available;
-            for (int i = 0; i < Size; i++)
+            for (int i = 0; i < Size - 1; i++)
             {
                 if (father[i] == mother[i])
-                    chromosome.Add(f.items[i], father[i]);
+                {
+                    avail.available[i] = father[i];
+                }
                 else
-                    chromosome.Add(f.items[i], rand.Next(0, 1));
+                {
+                    int k = rand.Next(0, 1);
+                    avail.available[i] = k;
+                }
             }
             SetPriceAndWeigth();
         }
@@ -108,12 +113,12 @@ namespace CombAlg_lab3
 
         public bool IsEmpty()
         {
-            for (int i = 0; i < Size; i++)
+            for (int i = 0; i < Size - 1; i++)
             {
                 if (avail.available[i] == 1)
-                    return true;
+                    return false;
             }
-            return false;
+            return true;
         }
     }
 }

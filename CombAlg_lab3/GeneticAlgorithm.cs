@@ -18,10 +18,9 @@ namespace CombAlg_lab3
         private int mutationCount; //кол-во мутаций
         private int cntParentChromes; //кол-во отбираемых хромосом
 
-        private List<Chromosome> firstGeneration;
-        private List<Chromosome> currentGeneration;
+        private List<Chromosome> firstGeneration = new List<Chromosome>();
+        private List<Chromosome> currentGeneration = new List<Chromosome>();
         public List<Item> bestItems = null;
-        private bool detected = false;
 
         public double needWeigth;
         private double currSumPrice = 0;
@@ -47,7 +46,8 @@ namespace CombAlg_lab3
 
             SetFirstGeneration(); //получаем первое поколение
             CheckAll(firstGeneration);
-            currentGeneration = firstGeneration;
+            foreach (Chromosome chr in firstGeneration)
+                currentGeneration.Add(chr);
             for (int step = 2; step <= steps; step++)
             {
                 GetNextGeneration();
@@ -65,7 +65,7 @@ namespace CombAlg_lab3
         //поиск наилучшего решения
         private void CheckAll(List<Chromosome> popul)
         {
-            for (int i = 0; i < firstGeneration.Count; i++)
+            for (int i = 0; i < popul.Count; i++)
             {
                 if (popul[i].CheckWeigth(needWeigth) && popul[i].SumPrice > currSumPrice)
                 {
@@ -79,7 +79,9 @@ namespace CombAlg_lab3
         private void GetNextGeneration()
         {
             //SortPopulation(currentGeneration);
-            List<Chromosome> nextGen = currentGeneration;
+            List<Chromosome> nextGen = new List<Chromosome>();
+            foreach (Chromosome chr in currentGeneration)
+                nextGen.Add(chr);
             //скрещивание
             for (int i = 0; i < currentGeneration.Count - 1; i++)
             {
@@ -103,7 +105,7 @@ namespace CombAlg_lab3
             firstGeneration = new List<Chromosome>();
             while (firstGeneration.Count < numOfChromosomes)
             {
-                Chromosome chr = new Chromosome(items);
+                Chromosome chr = new Chromosome(items, rand);
                 if (!chr.IsEmpty())
                     firstGeneration.Add(chr);
             }

@@ -67,7 +67,7 @@ namespace CombAlg_lab3
             else
             {
                 LVGen.Items.Clear();
-                foreach (Item i in solve)
+                foreach (Item i in gen_solve)
                 {
                     LVGen.Items.Add(new ListViewItem(new string[] { i.name, i.weigth.ToString(), i.price.ToString() }));
                 }

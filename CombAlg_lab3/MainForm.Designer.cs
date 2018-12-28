@@ -188,6 +188,7 @@
             this.LVGen.Size = new System.Drawing.Size(401, 189);
             this.LVGen.TabIndex = 8;
             this.LVGen.UseCompatibleStateImageBehavior = false;
+            this.LVGen.View = System.Windows.Forms.View.Details;
             // 
             // Name_3
             // 
